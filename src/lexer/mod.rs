@@ -47,7 +47,11 @@ impl<'a> Lexer<'a> {
         UnicodeXID::is_xid_continue(char)
     }
     pub fn skip(&mut self) {
-        while !self.cursor.eof() && (self.cursor.peek() == ' ' || self.cursor.peek() == '\t' || self.cursor.peek() == '\n') {
+        while !self.cursor.eof()
+            && (self.cursor.peek() == ' '
+                || self.cursor.peek() == '\t'
+                || self.cursor.peek() == '\n')
+        {
             self.cursor.next();
         }
         self.cursor.clear();
@@ -62,6 +66,7 @@ impl<'a> Lexer<'a> {
         let identifier = self.lex_identifier()?;
         Ok(match identifier.data {
             "if" => Token::new(identifier, TokenKind::If),
+            "else" => Token::new(identifier, TokenKind::Else),
             "while" => Token::new(identifier, TokenKind::While),
             "let" => Token::new(identifier, TokenKind::Let),
             "mut" => Token::new(identifier, TokenKind::Mut),
@@ -83,11 +88,11 @@ impl<'a> Lexer<'a> {
             self.cursor.next();
         }
         if has_error {
-            return Err(Error::new(
-                ErrorKind::UnexpectedToken,
+            return Err(Box::new(Error::new(
+                ErrorKind::UnexpectedCharacter,
                 self.cursor.span(),
                 self.cursor.input,
-            ));
+            )));
         }
         let kind = if is_float {
             TokenKind::Float
@@ -112,11 +117,11 @@ impl<'a> Lexer<'a> {
             '=' => choose!('=' => Equal || Assignment; self),
             '>' => choose!('=' => GreaterThenEqual || GreaterThen; self),
             '<' => choose!('=' => LessThenEqual || LessThen; self),
-            _ => Err(Error::new(
+            _ => Err(Box::new(Error::new(
                 ErrorKind::UnexpectedEndOfInput,
                 self.cursor.span(),
                 self.cursor.input,
-            )),
+            ))),
         };
         result
     }

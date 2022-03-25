@@ -1,6 +1,6 @@
 use super::cursor::chunk::Chunk;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum TokenKind {
     Identifier,
     Integer,
@@ -27,6 +27,7 @@ pub enum TokenKind {
     Comma,
 
     If,
+    Else,
     While,
     Let,
     Mut,

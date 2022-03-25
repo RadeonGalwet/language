@@ -1,5 +1,5 @@
+use super::{token::Token, Lexer};
 use crate::common::error::Result;
-use super::{Lexer, token::Token};
 
 impl<'a> Iterator for Lexer<'a> {
     type Item = Result<'a, Token<'a>>;

@@ -1,9 +1,11 @@
 use std::result;
 
+use crate::lexer::token::TokenKind;
+
 use super::{source::Source, span::Span};
 
-pub type Result<'a, T> = result::Result<T, Error<'a>>;
-#[derive(Clone, Copy, Debug)]
+pub type Result<'a, T> = result::Result<T, Box<Error<'a>>>;
+#[derive(Clone, Debug)]
 pub struct Error<'a> {
     pub kind: ErrorKind,
     pub span: Span,
@@ -15,8 +17,12 @@ impl<'a> Error<'a> {
         Self { kind, span, source }
     }
 }
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub enum ErrorKind {
-    UnexpectedToken,
-    UnexpectedEndOfInput
+    UnexpectedCharacter,
+    UnexpectedToken {
+        expected: Vec<TokenKind>,
+        received: TokenKind,
+    },
+    UnexpectedEndOfInput,
 }
