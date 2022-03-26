@@ -19,8 +19,10 @@ macro_rules! choose {
 }
 macro_rules! char {
     ($ident: ident; $self: ident) => {{
-        let token = Token::new($self.cursor.chunk(), crate::lexer::token::TokenKind::$ident);
         $self.cursor.next();
-        Ok(token)
+        Ok(Token::new(
+            $self.cursor.chunk(),
+            crate::lexer::token::TokenKind::$ident,
+        ))
     }};
 }

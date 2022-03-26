@@ -1,6 +1,6 @@
-use crate::lexer::token::TokenKind;
+use crate::{common::span::Span, lexer::token::TokenKind};
 
-use super::node::Node;
+use super::{calculate_span::CalculateSpan, node::Node, spanned::Spanned};
 
 #[derive(Clone, Copy, Debug)]
 pub enum Operator {
@@ -41,11 +41,24 @@ pub enum Expression<'a> {
         rhs: Box<Node<'a>>,
     },
     Prefix {
-        operator: Operator,
+        operator: Spanned<Operator>,
         value: Box<Node<'a>>,
     },
     Call {
-        name: &'a str,
-        arguments: Vec<Node<'a>>,
+        name: Spanned<&'a str>,
+        arguments: Spanned<Vec<Node<'a>>>,
     },
+}
+impl<'a> CalculateSpan for Expression<'a> {
+    fn calculate_span(&self) -> Span {
+        match self {
+            Expression::Infix { lhs, rhs, .. } => {
+                Span::new(lhs.calculate_span().start, rhs.calculate_span().end)
+            }
+            Expression::Prefix { operator, value } => {
+                Span::new(operator.span.start, value.calculate_span().end)
+            }
+            Expression::Call { name, arguments } => Span::new(name.span.start, arguments.span.end),
+        }
+    }
 }

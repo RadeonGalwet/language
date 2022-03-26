@@ -10,8 +10,8 @@ macro_rules! parentheses {
 
 #[macro_export]
 macro_rules! statement {
-    ($expr: expr; $self: ident) => {{
-        $self.cursor.next_token()?;
-        $expr
+    ($function: ident; $self: ident) => {{
+        let token = $self.cursor.next_token()?;
+        $self.$function(token.chunk.span)
     }};
 }

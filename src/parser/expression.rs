@@ -1,5 +1,8 @@
 use crate::{
-    common::error::{Error, ErrorKind, Result},
+    common::{
+        error::{Error, ErrorKind, Result},
+        span::Span,
+    },
     lexer::token::TokenKind,
 };
 
@@ -7,6 +10,7 @@ use super::{
     ast::{
         expression::{Expression, Operator},
         node::Node,
+        spanned::Spanned,
     },
     Parser,
 };
@@ -15,9 +19,15 @@ impl<'a> Parser<'a> {
     pub(super) fn parse_expression(&mut self, minimum_binding_power: u8) -> Result<'a, Node<'a>> {
         let lhs_token = self.cursor.next_token()?;
         let mut lhs = match lhs_token.kind {
-            TokenKind::Integer => Node::Integer(lhs_token.chunk.data),
-            TokenKind::Float => Node::Float(lhs_token.chunk.data),
-            TokenKind::Identifier => Node::Identifier(lhs_token.chunk.data),
+            TokenKind::Integer => {
+                Node::Integer(Spanned::new(lhs_token.chunk.data, lhs_token.chunk.span))
+            }
+            TokenKind::Float => {
+                Node::Float(Spanned::new(lhs_token.chunk.data, lhs_token.chunk.span))
+            }
+            TokenKind::Identifier => {
+                Node::Identifier(Spanned::new(lhs_token.chunk.data, lhs_token.chunk.span))
+            }
             TokenKind::LeftParenthesis => {
                 let expression = self.parse_expression(0)?;
                 self.cursor.consume(TokenKind::RightParenthesis)?;
@@ -28,7 +38,7 @@ impl<'a> Parser<'a> {
                 let ((), right_binding_power) = Self::prefix_binding_power(operator).unwrap();
                 let rhs = self.parse_expression(right_binding_power)?;
                 Node::Expression(Expression::Prefix {
-                    operator,
+                    operator: Spanned::new(operator, lhs_token.chunk.span),
                     value: Box::new(rhs),
                 })
             }
@@ -57,7 +67,7 @@ impl<'a> Parser<'a> {
                     if left_binding_power < minimum_binding_power {
                         break;
                     }
-                    self.cursor.next_token()?;
+                    let lp = self.cursor.next_token()?;
                     let arguments = self.arguments(
                         |parser| parser.parse_expression(0),
                         vec![
@@ -67,11 +77,14 @@ impl<'a> Parser<'a> {
                             TokenKind::Integer,
                         ],
                     )?;
-                    self.cursor.consume(TokenKind::RightParenthesis)?;
+                    let rp = self.cursor.consume(TokenKind::RightParenthesis)?;
                     if lhs_token.kind == TokenKind::Identifier {
                         lhs = Node::Expression(Expression::Call {
-                            name: lhs_token.chunk.data,
-                            arguments,
+                            name: Spanned::new(lhs_token.chunk.data, lhs_token.chunk.span),
+                            arguments: Spanned::new(
+                                arguments,
+                                Span::new(lp.chunk.span.start, rp.chunk.span.end),
+                            ),
                         })
                     } else {
                         return Err(Box::new(Error::new(

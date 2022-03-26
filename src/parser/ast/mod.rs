@@ -1,5 +1,6 @@
 use self::{function::Function, node::Node};
 
+pub mod calculate_span;
 pub mod expression;
 pub mod function;
 pub mod node;
